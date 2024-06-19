@@ -86,15 +86,21 @@ func handleAPIRequest(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    var payload Payload
-    err := json.NewDecoder(r.Body).Decode(&payload)
+    err := r.ParseForm()
     if err != nil {
-        http.Error(w, "Invalid request payload", http.StatusBadRequest)
+        http.Error(w, "Error parsing form data", http.StatusBadRequest)
         return
     }
 
-    apiURL := os.Getenv("API_URL")
-    if apiURL == "" {
+    payload := Payload{
+        StartDate: r.FormValue("startDate"),
+        EndDate:   r.FormValue("endDate"),
+        Mag:       r.Form["mag"],
+        States:    r.Form["states"],
+    }
+
+    url := os.Getenv("API_URL")
+    if url == "" {
         http.Error(w, "API URL is not set", http.StatusInternalServerError)
         return
     }
@@ -105,7 +111,7 @@ func handleAPIRequest(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    req, err := http.NewRequest("POST", apiURL, bytes.NewBuffer(data))
+    req, err := http.NewRequest("POST", url, bytes.NewBuffer(data))
     if err != nil {
         http.Error(w, "Error creating request", http.StatusInternalServerError)
         return
